@@ -1,0 +1,278 @@
+@import 'tailwindcss';
+
+/* Tailwind v4 scans from this file upward; be explicit so src/ is always covered. */
+@source '../';
+
+/* ===========================================================================
+   ACCENT — swap the whole site's signal colour by changing ONE line below.
+   =========================================================================== */
+:root {
+  --accent: #e8b84b; /* amber        — warm, confident, uncommon (default) */
+  /* --accent: #9b7bff;    plasma violet */
+  /* --accent: #ff6b35;    signal orange */
+
+  /* Derived from --accent at runtime, so swapping above updates everything. */
+  --accent-glow: color-mix(in oklab, var(--accent) 100%, transparent);
+  --accent-dim: color-mix(in oklab, var(--accent) 55%, var(--color-bg));
+}
+
+/* ===========================================================================
+   DESIGN TOKENS — exposed to Tailwind as utilities (bg-surface, text-muted,
+   font-display, text-hero, py-section, rounded-card, ease-out-expo, ...)
+   =========================================================================== */
+@theme {
+  /* --- Colour ------------------------------------------------------------ */
+  --color-bg: #0b0b0c; /* near-black, slightly warm */
+  --color-surface: #131316; /* cards */
+  --color-surface-2: #17171b; /* raised / hover */
+  --color-line: #26262b; /* hairline borders */
+  --color-line-strong: #34343b;
+  --color-fg: #f2f2f0; /* off-white, never pure */
+  --color-muted: #8a8a8f; /* 5.7:1 on bg — passes AA */
+  /* One step quieter than muted, but still AA on every surface we paint it on:
+     4.7:1 on surface-2, 4.9:1 on surface, 5.2:1 on bg. Don't darken it — the
+     obvious-looking #5c5c62 lands at 2.9:1 and fails on all three. */
+  --color-faint: #82828a;
+
+  /* --- Type -------------------------------------------------------------- */
+  --font-display: var(--font-space-grotesk), 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  --font-hand: var(--font-caveat), 'Caveat', 'Segoe Script', cursive;
+  --font-marker: var(--font-marker), 'Permanent Marker', 'Comic Sans MS', cursive;
+  --font-serif: var(--font-serif), 'Playfair Display', Georgia, 'Times New Roman', serif;
+
+  /* Editorial scale. Fluid where it matters, fixed where it must stay calm. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.4;
+  --text-2xs--letter-spacing: 0.14em;
+
+  --text-xs: 0.78125rem;
+  --text-xs--line-height: 1.5;
+
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.65;
+
+  --text-base: 1rem;
+  --text-base--line-height: 1.75; /* generous body leading */
+
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.7;
+
+  --text-xl: clamp(1.25rem, 0.9rem + 1vw, 1.5rem);
+  --text-xl--line-height: 1.55;
+
+  --text-2xl: clamp(1.5rem, 1.1rem + 1.6vw, 2rem);
+  --text-2xl--line-height: 1.35;
+
+  --text-section: clamp(2rem, 1.2rem + 3.4vw, 3.5rem);
+  --text-section--line-height: 1.06;
+  --text-section--letter-spacing: -0.03em;
+
+  --text-display: clamp(2.75rem, 1.4rem + 5.6vw, 5.5rem);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.04em;
+
+  --text-hero: clamp(3.25rem, 0.5rem + 11.5vw, 9.5rem);
+  --text-hero--line-height: 0.86;
+  --text-hero--letter-spacing: -0.05em;
+
+  /* --- Space ------------------------------------------------------------- */
+  --spacing-gutter: clamp(1.25rem, 0.6rem + 3vw, 4rem);
+  --spacing-section: clamp(5.5rem, 3rem + 8vw, 10rem);
+  --spacing-stack: clamp(2rem, 1.2rem + 3vw, 4rem);
+
+  --container-shell: 82rem;
+  --container-prose: 46rem;
+
+  /* --- Shape & motion ---------------------------------------------------- */
+  --radius-card: 14px;
+  --radius-pill: 999px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Inline so `text-accent`, `border-accent/30` etc. resolve straight to
+   var(--accent) — one swap above repaints the entire site. */
+@theme inline {
+  --color-accent: var(--accent);
+}
+
+/* ===========================================================================
+   BASE
+   =========================================================================== */
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* The browser owns scrolling. Nothing intercepts the wheel, so input
+       latency is zero and anchor jumps animate on the compositor. */
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    font-variant-ligatures: contextual;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: #0b0b0c;
+  }
+
+  /* Visible, on-brand focus for keyboard users only. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  /* Any anchor target — sections, #main, #top — must clear the fixed nav.
+     The browser does the jump itself. */
+  [id] {
+    scroll-margin-top: 6rem;
+  }
+}
+
+/* ===========================================================================
+   UTILITIES
+   =========================================================================== */
+@utility shell {
+  width: 100%;
+  max-width: var(--container-shell);
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+/* Small caps label used above every section heading. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/**
+ * Accent underline that draws in from the left on hover/focus.
+ *
+ * Sized to `width: 100%` of whatever element carries this class — which is
+ * exactly right when that element IS the visible text (Hero's "Or get in
+ * touch", the footer, project links). It's exactly wrong when the class
+ * sits on a PADDED element like a nav link: the underline then spans the
+ * text plus the padding, and because padding is a fixed pixel amount while
+ * word length varies ("Work" vs "Services"), the overshoot past the word is
+ * a wildly different proportion each time — short words get a visibly
+ * wide, loose underline, long words get a tight one. That reads as crooked
+ * and unevenly spaced even though the padding itself never changes.
+ *
+ * The `.group` selectors below are for exactly that case: put `link-draw`
+ * on an unpadded inner span (so the underline hugs the word precisely) and
+ * `group` on the padded outer element (so hovering anywhere in the padded
+ * hit area still triggers it).
+ */
+@utility link-draw {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 1px;
+    width: 100%;
+    background-color: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.45s var(--ease-out-expo);
+  }
+  &:hover::after,
+  &:focus-visible::after {
+    transform: scaleX(1);
+  }
+  .group:hover &::after,
+  .group:focus-visible &::after {
+    transform: scaleX(1);
+  }
+}
+
+/* ===========================================================================
+   FILM GRAIN — one fixed layer, painted once, never repainted on scroll.
+   =========================================================================== */
+.grain {
+  position: fixed;
+  /* inset: 0, not -100%. At -100% this layer was 3x the viewport in each
+     direction — nine screens of texture held on the GPU for no reason. */
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Star twinkle, as a CSS keyframe rather than a JS-driven animation per star.
+   Runs on the compositor and costs the main thread nothing. */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: var(--twinkle-min);
+  }
+  50% {
+    opacity: var(--twinkle-max);
+  }
+}
+
+.twinkle {
+  animation: twinkle var(--twinkle-duration, 4s) ease-in-out infinite;
+  animation-delay: var(--twinkle-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twinkle {
+    animation: none;
+    opacity: var(--twinkle-min);
+  }
+}
+
+/* ===========================================================================
+   REDUCED MOTION — kill every non-essential animation, keep all content.
+   Framer components read the same preference via useReducedMotion().
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .grain {
+    display: none;
+  }
+}
+
