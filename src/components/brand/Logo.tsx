@@ -39,6 +39,10 @@ const ORBIT = {
 const TILT_COS = Math.cos((ORBIT.tilt * Math.PI) / 180);
 const TILT_SIN = Math.sin((ORBIT.tilt * Math.PI) / 180);
 
+/** One full lap once the dot has settled, when `loop` is on. Slow and quiet
+ *  on purpose — a background detail, not something asking to be watched. */
+const LOOP_PERIOD = 16;
+
 /**
  * The mark is drawn in 0-64 space, but the dot's orbit is wider than that —
  * its extremes reach x = -1.8 and x = 65.8, and an SVG clips at its viewBox.
@@ -56,6 +60,8 @@ export interface LogoProps {
   draw?: boolean;
   /** Run the single orbit loop on mount, then rest. */
   orbit?: boolean;
+  /** After the arrival loop settles, keep the dot circling slowly forever. Requires `orbit`. */
+  loop?: boolean;
   /** Seconds to wait before the mark animates in. */
   delay?: number;
   className?: string;
@@ -70,6 +76,7 @@ export function Logo({
   size = 70,
   draw = false,
   orbit = false,
+  loop = false,
   delay = 0,
   className,
   title,
@@ -103,15 +110,36 @@ export function Logo({
       return;
     }
 
-    const controls = animate(angle, ORBIT.restAngle, {
+    // StrictMode mounts every effect twice in dev (mount, cleanup, mount) —
+    // without this flag, the first run's settle can still complete and
+    // start its own infinite loop after cleanup, leaving two competing
+    // animations fighting over the same angle. onComplete checks it before
+    // ever starting the loop, so a cleaned-up run can't do that.
+    let cancelled = false;
+    let continuous: ReturnType<typeof animate> | undefined;
+
+    const settle = animate(angle, ORBIT.restAngle, {
       duration: 2.6,
       delay: delay + 0.3,
       // Eases out of the loop so it arrives and settles rather than stopping.
       ease: [0.5, 0, 0.15, 1],
+      onComplete: () => {
+        if (loop && !cancelled) {
+          continuous = animate(angle, ORBIT.restAngle - Math.PI * 2, {
+            duration: LOOP_PERIOD,
+            ease: 'linear',
+            repeat: Infinity,
+          });
+        }
+      },
     });
 
-    return () => controls.stop();
-  }, [angle, shouldOrbit, delay]);
+    return () => {
+      cancelled = true;
+      settle.stop();
+      continuous?.stop();
+    };
+  }, [angle, shouldOrbit, loop, delay]);
 
   const decorative = title === undefined;
 
@@ -130,7 +158,10 @@ export function Logo({
     >
       {!decorative && <title id={titleId}>{title}</title>}
 
-      {/* Ghost of the orbital path — only visible while the dot is travelling. */}
+      {/* Ghost of the orbital path — visible while the dot is travelling.
+          When `loop` is on the dot never stops travelling, so this settles
+          at a low resting opacity instead of fading out; otherwise it fades
+          out with the one-shot arrival animation, as before. */}
       {shouldOrbit && (
         <motion.ellipse
           cx={32}
@@ -141,7 +172,7 @@ export function Logo({
           stroke="currentColor"
           strokeWidth={0.75}
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.16, 0.16, 0] }}
+          animate={{ opacity: loop ? [0, 0.16, 0.16, 0.1] : [0, 0.16, 0.16, 0] }}
           transition={{
             duration: 3.1,
             delay: delay + 0.2,

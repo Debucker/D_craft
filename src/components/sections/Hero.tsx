@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 import { ArrowIcon } from '@/components/icons/Arrow';
 import { MailIcon } from '@/components/icons/Mail';
+import { Logo } from '@/components/brand/Logo';
 import { OrbitField } from '@/components/brand/OrbitField';
 import { Stagger, StaggerItem } from '@/components/motion/Reveal';
 import { site } from '@/content/site';
@@ -28,7 +29,18 @@ export function Hero() {
       />
 
       <div className="shell relative grid items-center gap-stack lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-12">
-        <Stagger immediate stagger={0.09} delay={0.1} className="max-w-[22ch] lg:max-w-none">
+        <Stagger immediate stagger={0.09} delay={0.1} className="text-center lg:text-left">
+          <StaggerItem className="mb-5 flex justify-center lg:justify-start">
+            <Logo
+              size={96}
+              draw
+              orbit
+              loop
+              delay={0.2}
+              className="h-16 w-16 text-fg sm:h-20 sm:w-20 lg:h-24 lg:w-24"
+            />
+          </StaggerItem>
+
           <StaggerItem>
             <h1 className="text-hero font-bold text-fg">
               {site.hero.headline.map((line) => (
@@ -40,17 +52,17 @@ export function Hero() {
             </h1>
           </StaggerItem>
 
-          <StaggerItem className="mt-8 max-w-[26ch] sm:max-w-[34ch]">
+          <StaggerItem className="mx-auto mt-8 max-w-[26ch] sm:max-w-[34ch] lg:mx-0">
             <p className="text-2xl font-display font-semibold leading-tight text-fg">
               {site.hero.positioning}
             </p>
           </StaggerItem>
 
-          <StaggerItem className="mt-6 max-w-[54ch]">
+          <StaggerItem className="mx-auto mt-6 max-w-[54ch] lg:mx-0">
             <p className="text-base text-muted">{site.hero.sub}</p>
           </StaggerItem>
 
-          <StaggerItem className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4">
+          <StaggerItem className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 lg:justify-start">
             <a
               href="#work"
               className="group inline-flex items-center gap-2.5 rounded-pill bg-accent px-6 py-3 text-sm font-medium text-bg transition-transform duration-300 ease-out-expo hover:-translate-y-0.5"
