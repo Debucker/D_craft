@@ -62,11 +62,24 @@ export function Splash({ id }: SplashProps) {
     markSeen(id);
     const previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
-    const timer = window.setTimeout(() => setVisible(false), HOLD_MS);
+
+    // `setVisible(false)` below doesn't unmount this component — Splash
+    // stays mounted with the overlay just removed from its JSX — so the
+    // effect's own cleanup (which only runs on unmount or a dependency
+    // change, neither of which happens here) is not enough to undo the
+    // line above. Restore it directly whenever the hold ends, and keep the
+    // cleanup only for the case where Splash unmounts before the timer.
+    const restore = () => {
+      document.documentElement.style.overflow = previousOverflow;
+    };
+    const timer = window.setTimeout(() => {
+      restore();
+      setVisible(false);
+    }, HOLD_MS);
 
     return () => {
       window.clearTimeout(timer);
-      document.documentElement.style.overflow = previousOverflow;
+      restore();
     };
   }, [reduceMotion, id]);
 
@@ -75,7 +88,7 @@ export function Splash({ id }: SplashProps) {
       {visible && (
         <motion.div
           aria-hidden
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-bg"
+          className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center bg-bg"
           initial={false}
           exit={{ opacity: 0 }}
           transition={{ duration: instant ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
