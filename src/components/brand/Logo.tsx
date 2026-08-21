@@ -125,7 +125,11 @@ export function Logo({
       ease: [0.5, 0, 0.15, 1],
       onComplete: () => {
         if (loop && !cancelled) {
-          continuous = animate(angle, ORBIT.restAngle - Math.PI * 2, {
+          // Same sign as the settle target above (which travels from
+          // restAngle - 2π up to restAngle, i.e. increasing) — using -2π
+          // here would spin the loop the opposite way the instant it took
+          // over, so the dot visibly reverses direction at the handoff.
+          continuous = animate(angle, ORBIT.restAngle + Math.PI * 2, {
             duration: LOOP_PERIOD,
             ease: 'linear',
             repeat: Infinity,
