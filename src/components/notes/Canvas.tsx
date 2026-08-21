@@ -309,6 +309,14 @@ export function Canvas() {
   const [pinned, setPinned] = useState(false);
   const [minimapOpen, setMinimapOpen] = useState(true);
   /**
+   * A touch/coarse-pointer device has no hover, so the position-based
+   * auto-hide below has no way to reopen the bar except the small "Toolbar"
+   * handle — reachable, but easy to lose track of mid-gesture. Detecting
+   * this and auto-pinning keeps the bar reliably on screen instead, the
+   * same as a person choosing to pin it.
+   */
+  const [coarsePointer, setCoarsePointer] = useState(false);
+  /**
    * Which dropdown is open, and where its trigger sits relative to the bar.
    * Panels are rendered as siblings of the scrolling row, not inside it —
    * `overflow-x: auto` clips vertically too, so a panel nested in the row
@@ -445,6 +453,18 @@ export function Canvas() {
 
   /* ---- The auto-hiding bar ------------------------------------------------ */
 
+  useEffect(() => {
+    const query = window.matchMedia('(pointer: coarse)');
+    setCoarsePointer(query.matches);
+    if (query.matches) setPinned(true);
+    const onChange = (event: MediaQueryListEvent) => {
+      setCoarsePointer(event.matches);
+      if (event.matches) setPinned(true);
+    };
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
   /**
    * Driven by pointer position, not mouseenter/mouseleave. Leave events only
    * fire once the pointer has actually been inside the bar, so a bar that has
@@ -560,8 +580,33 @@ export function Canvas() {
   const panning = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   const dragging = useRef<{ id: string; x: number; y: number; nx: number; ny: number } | null>(null);
 
+  /**
+   * Two-finger pinch-to-zoom. The wheel handler above is the only zoom path
+   * that exists otherwise, and a touch screen has no wheel — without this,
+   * phones and tablets could pan the board but never zoom it.
+   */
+  const activeTouches = useRef(new Map<number, { x: number; y: number }>());
+  const pinchDist = useRef<number | null>(null);
+
   const onBackgroundPointerDown = (event: ReactPointerEvent) => {
-    if (event.button !== 0 && event.button !== 1) return;
+    if (event.pointerType === 'touch') {
+      activeTouches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      try {
+        (event.currentTarget as Element).setPointerCapture(event.pointerId);
+      } catch {
+        /* Non-fatal. */
+      }
+      if (activeTouches.current.size >= 2) {
+        // A second finger just landed — hand off from panning to pinching.
+        panning.current = null;
+        const [a, b] = Array.from(activeTouches.current.values());
+        pinchDist.current = a && b ? Math.hypot(b.x - a.x, b.y - a.y) : null;
+        return;
+      }
+    } else if (event.button !== 0 && event.button !== 1) {
+      return;
+    }
+
     setSelectedId(null);
     setEditingId(null);
     panning.current = { x: event.clientX, y: event.clientY, vx: view.x, vy: view.y };
@@ -595,6 +640,34 @@ export function Canvas() {
   };
 
   const onPointerMove = (event: ReactPointerEvent) => {
+    if (event.pointerType === 'touch' && activeTouches.current.has(event.pointerId)) {
+      activeTouches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+
+    if (activeTouches.current.size >= 2 && pinchDist.current !== null) {
+      const [a, b] = Array.from(activeTouches.current.values());
+      if (a && b) {
+        const dist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        const rect = containerRef.current?.getBoundingClientRect();
+        const px = (a.x + b.x) / 2 - (rect?.left ?? 0);
+        const py = (a.y + b.y) / 2 - (rect?.top ?? 0);
+        const lastDist = pinchDist.current;
+        setView((prev) => {
+          const factor = dist / lastDist;
+          const next = Math.min(ZOOM.max, Math.max(ZOOM.min, prev.scale * factor));
+          // Same anchor trick as the wheel handler: pin the world point
+          // under the fingers' midpoint, recomputed every frame off the
+          // LIVE view so a pinch that also drifts sideways pans and zooms
+          // together instead of only one or the other.
+          const worldX = (px - prev.x) / prev.scale;
+          const worldY = (py - prev.y) / prev.scale;
+          return { scale: next, x: px - worldX * next, y: py - worldY * next };
+        });
+        pinchDist.current = dist;
+      }
+      return;
+    }
+
     if (dragging.current) {
       const drag = dragging.current;
       // Screen pixels -> world units, or the note lags the cursor when zoomed.
@@ -617,7 +690,11 @@ export function Canvas() {
     }
   };
 
-  const endPointer = () => {
+  const endPointer = (event: ReactPointerEvent) => {
+    if (event.pointerType === 'touch') {
+      activeTouches.current.delete(event.pointerId);
+      if (activeTouches.current.size < 2) pinchDist.current = null;
+    }
     if (dragging.current) pushNote(dragging.current.id);
     dragging.current = null;
     panning.current = null;
@@ -1768,8 +1845,9 @@ export function Canvas() {
           )}
         </AnimatePresence>
         <p className="rounded-full border border-white/[0.07] bg-black/45 px-4 py-1.5 text-xs text-white/40 backdrop-blur">
-          Pointer to the top for the toolbar · scroll to zoom · drag to pan ·
-          double-click your note to write · F fits the board · everyone sees this board
+          {coarsePointer
+            ? 'Drag to pan · pinch to zoom · tap a note, then Edit to write · everyone sees this board'
+            : 'Pointer to the top for the toolbar · scroll to zoom · drag to pan · double-click your note to write · F fits the board · everyone sees this board'}
         </p>
       </div>
     </div>
