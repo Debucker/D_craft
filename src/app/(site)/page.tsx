@@ -15,7 +15,11 @@ function PersonSchema({ projects }: { projects: readonly Project[] }) {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
-    name: site.name,
+    name: 'Danil Temirgaliev',
+    // Every way someone might search for the same person — the brand name
+    // in its common spellings, and the name reversed the way some people
+    // type it.
+    alternateName: ['D_craft', 'D-craft', 'Dcraft', 'Temirgaliev Danil'],
     jobTitle: site.role,
     url: site.url,
     email: `mailto:${site.email}`,

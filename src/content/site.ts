@@ -98,7 +98,7 @@ export const site: SiteConfig = {
   shortName: 'D_craft',
   role: 'Full-stack web developer',
   location: 'Tashkent, Uzbekistan',
-  url: 'https://dcraft.dev', // TODO: your real domain before deploying
+  url: 'https://d-craft.dev',
   email: 'danil.temirgaliev1@gmail.com',
 
   hero: {
@@ -111,9 +111,7 @@ export const site: SiteConfig = {
   about: {
     heading: 'What I do, in plain terms.',
     paragraphs: [
-      // TODO: "Danil" is your real first name, from your email and LinkedIn.
-      // Delete it here if you'd rather the site stayed under D_craft alone.
-      "I'm Danil, a 17-year-old full-stack developer. I build websites and web applications for clients, and I run two products of my own. I work from Tashkent, spend time in the USA, and take remote work from anywhere.",
+      "I'm Danil Temirgaliev, a 17-year-old full-stack developer. I build websites and web applications for clients, and I run two products of my own. I work from Tashkent, spend time in the USA, and take remote work from anywhere.",
       'I handle every layer of a build: the interface design, the front-end, the back-end, the database, and getting it deployed and running. For a client that means one person is responsible for the whole thing, and nothing gets lost between a designer, a developer and whoever set up the server.',
       'So far that has included an online gadget store, a certification and testing lab’s site, a front-end build for a commercial product, a travel-planning platform I founded, and an earthquake-detection network that runs on ordinary smartphones. Alongside the code I design brand identity and print for Model UN conferences, and I teach programming to beginners.',
       "Right now I'm applying to universities and building something new that isn't public yet.",
@@ -197,10 +195,15 @@ export const site: SiteConfig = {
   },
 
   seo: {
-    title: 'D_craft — Full-stack web developer',
+    title: 'D_craft — Danil Temirgaliev, Full-stack web developer',
     description:
-      'Full-stack web developer working from Tashkent, the USA and remotely. I design and build websites, online stores and web applications end to end — founder of Karvon and Ne-pulse. Available for freelance work.',
+      "Danil Temirgaliev (D_craft) — full-stack web developer working from Tashkent, the USA and remotely. I design and build websites, online stores and web applications end to end — founder of Karvon and Ne-pulse. Available for freelance work.",
     keywords: [
+      'Danil Temirgaliev',
+      'Temirgaliev Danil',
+      'D_craft',
+      'D-craft',
+      'Dcraft',
       'full-stack developer',
       'web developer',
       'freelance web developer',
