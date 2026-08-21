@@ -183,7 +183,7 @@ export const site: SiteConfig = {
     line: 'Available for freelance work and new projects. Tell me what you need built and I will reply with an honest answer on whether I can do it, roughly how long it would take, and what it would cost.',
     form: {
       heading: 'Tell me about your project',
-      note: 'Opens in your mail app with everything filled in — nothing is stored on this site.',
+      note: 'Sent straight to my inbox — nothing is stored on this site, and I reply to whatever address you give.',
       name: { label: 'Name', placeholder: 'Your name' },
       email: { label: 'Email', placeholder: 'you@example.com' },
       message: {
@@ -191,8 +191,8 @@ export const site: SiteConfig = {
         placeholder: 'A short description of the project, and a rough deadline if you have one.',
       },
       submit: 'Send inquiry',
-      sending: 'Opening your mail app…',
-      sent: 'Your mail app should be open — if not, write to me directly at the address above.',
+      sending: 'Sending…',
+      sent: 'Sent — I will get back to you soon.',
     },
   },
 

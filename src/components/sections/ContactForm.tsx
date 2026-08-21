@@ -9,16 +9,13 @@ import { site } from '@/content/site';
 /**
  * INQUIRY FORM
  * -----------------------------------------------------------------------
- * The site is statically prerendered with no backend, so there is nothing to
- * POST to. Rather than fake a submission, this composes a pre-filled mail
- * draft and hands it to the visitor's mail client — the message genuinely
- * reaches the inbox, and no third-party form service sees anyone's address.
- *
- * To move to a real endpoint later, replace the body of `submit()` with your
- * fetch — the validation, error and status handling around it stay as they are.
+ * POSTs to /api/contact, which sends the message on via Resend. Nothing is
+ * stored — the route just relays it to `site.email` and replies-to whatever
+ * address the visitor gave, so hitting reply on the inbox side goes straight
+ * back to them.
  */
 
-type Status = 'idle' | 'sending' | 'sent';
+type Status = 'idle' | 'sending' | 'sent' | 'error';
 
 interface Fields {
   name: string;
@@ -49,6 +46,7 @@ export function ContactForm() {
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<Status>('idle');
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const copy = site.contact.form;
@@ -59,7 +57,7 @@ export function ContactForm() {
     setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
   };
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const found = validate(fields);
@@ -78,25 +76,34 @@ export function ContactForm() {
     }
 
     setStatus('sending');
+    setSubmitError(null);
 
-    const subject = 'Portfolio inquiry — ' + fields.name.trim();
-    const body =
-      fields.message.trim() + '\n\n—\n' + fields.name.trim() + '\n' + fields.email.trim();
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: fields.name.trim(),
+          email: fields.email.trim(),
+          message: fields.message.trim(),
+        }),
+      });
 
-    window.location.href =
-      'mailto:' +
-      site.email +
-      '?subject=' +
-      encodeURIComponent(subject) +
-      '&body=' +
-      encodeURIComponent(body);
+      if (!response.ok) {
+        const data: unknown = await response.json().catch(() => null);
+        const message =
+          data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+            ? data.error
+            : 'Something went wrong — try again.';
+        throw new Error(message);
+      }
 
-    // The mail client opens in a separate context; this page never navigates,
-    // so settle into a confirmed state and let them send another.
-    window.setTimeout(() => {
       setStatus('sent');
       setFields(EMPTY);
-    }, 900);
+    } catch (error) {
+      setStatus('error');
+      setSubmitError(error instanceof Error ? error.message : 'Something went wrong — try again.');
+    }
   }
 
   const fieldClass = (invalid: boolean) =>
@@ -217,8 +224,12 @@ export function ContactForm() {
             </button>
 
             {/* Polite, so it is announced without interrupting typing. */}
-            <p role="status" aria-live="polite" className="max-w-[34ch] text-sm text-muted">
-              {status === 'sent' ? copy.sent : ''}
+            <p
+              role="status"
+              aria-live="polite"
+              className={`max-w-[34ch] text-sm ${status === 'error' ? 'text-accent' : 'text-muted'}`}
+            >
+              {status === 'sent' ? copy.sent : status === 'error' ? submitError : ''}
             </p>
           </div>
         </div>
